@@ -58,6 +58,20 @@ module "vpc" {
 - Public subnets enable `map_public_ip_on_launch`.
 - Private route tables are created without NAT Gateway egress in this version.
 
+## Release Process
+
+- Open a pull request and let the Terraform validation workflow pass.
+- Merge the change to `main`.
+- Create and push a version tag, for example:
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+- Pushing the tag triggers the release workflow and creates the GitHub release.
+- Consume released versions from other Terraform repos by pinning the module source with `?ref=v1.0.0`.
+
 ## Prerequisites
 
 - Terraform 1.x
