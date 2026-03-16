@@ -9,5 +9,6 @@ on:
       - main
 
 jobs:
-  validate:
+  terraform-validate:
+    name: terraform-validate
     uses: karoosoftware/github-actions-workflows/.github/workflows/terraform-module-validate.yml@main
