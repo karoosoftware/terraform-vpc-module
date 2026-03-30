@@ -1,6 +1,7 @@
 data "aws_availability_zones" "available" {
   state = "available"
 }
+data "aws_region" "current" {}
 
 locals {
   # Gets the full list of vailable AZ in the region - example: ["eu-west-2a", "eu-west-2b", "eu-west-2c"]
@@ -103,4 +104,67 @@ resource "aws_route_table_association" "private" {
 
   subnet_id      = each.value.id
   route_table_id = aws_route_table.private[each.key].id
+}
+
+resource "aws_security_group" "endpoints" {
+  count = var.create_interface_endpoints ? 1 : 0
+
+  name        = var.endpoint_security_group_name
+  description = "Security group for shared VPC interface endpoints."
+  vpc_id      = aws_vpc.this.id
+
+  egress {
+    description = "Allow all outbound traffic."
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = merge(local.base_tags, {
+    Name = var.endpoint_security_group_name
+  })
+}
+
+resource "aws_vpc_security_group_ingress_rule" "endpoint_https" {
+  for_each = var.create_interface_endpoints ? toset(var.endpoint_allowed_security_group_ids) : toset([])
+
+  security_group_id            = aws_security_group.endpoints[0].id
+  referenced_security_group_id = each.value
+  ip_protocol                  = "tcp"
+  from_port                    = 443
+  to_port                      = 443
+  description                  = "Allow HTTPS from approved workload security groups."
+}
+
+resource "aws_vpc_endpoint" "interface" {
+  for_each = var.create_interface_endpoints ? {
+    ecr_api = "com.amazonaws.${data.aws_region.current.name}.ecr.api"
+    ecr_dkr = "com.amazonaws.${data.aws_region.current.name}.ecr.dkr"
+    logs    = "com.amazonaws.${data.aws_region.current.name}.logs"
+  } : {}
+
+  vpc_id              = aws_vpc.this.id
+  service_name        = each.value
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = [for subnet in aws_subnet.private : subnet.id]
+  security_group_ids  = [aws_security_group.endpoints[0].id]
+  private_dns_enabled = true
+
+  tags = merge(local.base_tags, {
+    Name = "${local.resource_name_prefix}-${each.key}-vpce"
+  })
+}
+
+resource "aws_vpc_endpoint" "s3" {
+  count = var.create_s3_gateway_endpoint ? 1 : 0
+
+  vpc_id            = aws_vpc.this.id
+  service_name      = "com.amazonaws.${data.aws_region.current.name}.s3"
+  vpc_endpoint_type = "Gateway"
+  route_table_ids   = [for rt in aws_route_table.private : rt.id]
+
+  tags = merge(local.base_tags, {
+    Name = "${local.resource_name_prefix}-s3-vpce"
+  })
 }
