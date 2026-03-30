@@ -30,3 +30,32 @@ variable "tags" {
   description = "Common tags applied to resources"
   default     = {}
 }
+
+variable "create_interface_endpoints" {
+  description = "Whether to create shared interface VPC endpoints for private AWS service access."
+  type        = bool
+  default     = false
+}
+
+variable "create_s3_gateway_endpoint" {
+  description = "Whether to create the shared S3 gateway VPC endpoint."
+  type        = bool
+  default     = false
+}
+
+variable "endpoint_security_group_name" {
+  description = "Name of the shared security group attached to VPC interface endpoints."
+  type        = string
+  default     = null
+
+  validation {
+    condition     = !var.create_interface_endpoints || var.endpoint_security_group_name != null
+    error_message = "endpoint_security_group_name must be set when create_interface_endpoints is true."
+  }
+}
+
+variable "endpoint_allowed_security_group_ids" {
+  description = "Security group IDs allowed to connect to the interface endpoints over HTTPS."
+  type        = list(string)
+  default     = []
+}
