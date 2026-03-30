@@ -139,9 +139,9 @@ resource "aws_vpc_security_group_ingress_rule" "endpoint_https" {
 
 resource "aws_vpc_endpoint" "interface" {
   for_each = var.create_interface_endpoints ? {
-    ecr_api = "com.amazonaws.${data.aws_region.current.name}.ecr.api"
-    ecr_dkr = "com.amazonaws.${data.aws_region.current.name}.ecr.dkr"
-    logs    = "com.amazonaws.${data.aws_region.current.name}.logs"
+    ecr_api = "com.amazonaws.${data.aws_region.current.region}.ecr.api"
+    ecr_dkr = "com.amazonaws.${data.aws_region.current.region}.ecr.dkr"
+    logs    = "com.amazonaws.${data.aws_region.current.region}.logs"
   } : {}
 
   vpc_id              = aws_vpc.this.id
