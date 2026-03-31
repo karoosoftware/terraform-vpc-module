@@ -142,6 +142,7 @@ resource "aws_vpc_endpoint" "interface" {
     ecr_api = "com.amazonaws.${data.aws_region.current.region}.ecr.api"
     ecr_dkr = "com.amazonaws.${data.aws_region.current.region}.ecr.dkr"
     logs    = "com.amazonaws.${data.aws_region.current.region}.logs"
+    ses     = "com.amazonaws.${data.aws_region.current.region}.email"
   } : {}
 
   vpc_id              = aws_vpc.this.id
